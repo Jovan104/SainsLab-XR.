@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SainsLab XR – XR science lab for SPM students (alpha prototype)</title>
+<title>SainsLab VR – virtual reality science lab for Taylor's Foundation in Science (alpha prototype)</title>
 <style>
 /*FONTS*/
 :root{
@@ -438,43 +438,66 @@ body.desk .pip{width:150px;height:190px}
 body.desk .caption{left:50%;right:auto;width:640px;transform:translateX(-50%);bottom:16px;font-size:16px}
 body.desk .twocol{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:26px;align-items:start}
 body.desk #v-prefs .scroll>*{max-width:760px}
+/* VR mode */
+.vrui{display:none;position:absolute;inset:0;z-index:6;pointer-events:none}
+.v3d.vr .vrui{display:block}.v3d.vr .labs{display:none}
+.vrui .eye{position:absolute;top:0;bottom:0;width:50%;background:radial-gradient(ellipse 58% 66% at 50% 50%,transparent 72%,rgba(0,0,0,.92) 100%)}
+.vrui .eye.l{left:0}.vrui .eye.r{right:0}
+.vrui::after{content:"";position:absolute;left:calc(50% - 2px);top:0;bottom:0;width:4px;background:#000}
+.vrui .ret{position:absolute;left:50%;top:50%;width:24px;height:24px;margin:-12px 0 0 -12px}
+.vrui .ret i{position:absolute;inset:0;border-radius:50%;background:rgba(255,255,255,.25);-webkit-mask:radial-gradient(circle,transparent 7px,#000 8px);mask:radial-gradient(circle,transparent 7px,#000 8px)}
+.vrui .ret::after{content:"";position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px;border-radius:50%;background:#fff}
+.vrui .vrcard{display:none;position:absolute;top:calc(50% + 20px);left:50%;transform:translateX(-50%);width:max-content;max-width:78%;background:rgba(10,18,28,.86);color:#fff;border:1px solid rgba(255,255,255,.22);border-radius:10px;padding:6px 10px;font-size:12px;text-align:center;line-height:1.3}
+.vrui .vrcard b{display:block;font-size:13px}.vrui .vrcard span{display:block;color:#B6C3D0;font-size:11px;margin-top:3px}
+.vrui .vrbar{position:absolute;left:0;right:0;top:10px;display:flex;justify-content:center;gap:8px;align-items:center;pointer-events:auto;z-index:2}
+.vrui .vrhint{background:rgba(0,0,0,.6);color:#fff;font-size:12px;padding:6px 10px;border-radius:999px}
+.vrui .vrexit{background:#fff;color:var(--ink);font-weight:700;border-radius:999px;padding:0 14px;min-height:34px;font-size:13px}
+.vwrap.vron{position:absolute!important;inset:0;height:auto!important;z-index:40}
+.vwrap.vron .vtools,.vwrap.vron .vinfo,.vwrap.vron .vbottom,.vwrap.vron .pip{display:none!important}
+.vwrap.vron .caption{left:6%;right:6%;bottom:14px;max-height:30%;overflow:hidden}
+body:not(.desk) #app.vrmode .view .status,body:not(.desk) #app.vrmode .view .ehead,body:not(.desk) #app.vrmode .view .etabs{display:none}
+.vrpick{display:flex;flex-direction:column;gap:10px;margin:12px 0}
+.vrpick button{display:flex;gap:12px;align-items:flex-start;text-align:left;border:1.5px solid var(--line);border-radius:14px;padding:12px;background:#fff}
+.vrpick button:disabled{opacity:.55}
+.vrpick b{display:block;font-size:15px}.vrpick small{display:block;color:var(--muted);font-size:13px;line-height:1.35;margin-top:2px}
+.vrpick svg{width:28px;height:28px;flex:none;color:var(--hot)}
 </style>
 </head>
 <body>
 <div class="stage">
   <aside class="nav" aria-label="Prototype navigator">
-    <div class="logo"><svg viewBox="0 0 48 48" width="40" height="40" aria-hidden="true"><defs><linearGradient id="lg0" x1="0" x2="1"><stop offset="0" stop-color="#E63946"/><stop offset=".5" stop-color="#F4D35E"/><stop offset="1" stop-color="#3A86FF"/></linearGradient></defs><circle cx="24" cy="24" r="21" fill="#0F1B2A"/><g fill="none" stroke="url(#lg0)" stroke-width="2.6"><ellipse cx="24" cy="24" rx="15" ry="6"/><ellipse cx="24" cy="24" rx="15" ry="6" transform="rotate(60 24 24)"/><ellipse cx="24" cy="24" rx="15" ry="6" transform="rotate(-60 24 24)"/></g><circle cx="24" cy="24" r="3.6" fill="#fff"/></svg><h1 class="disp">SainsLab XR</h1></div>
-    <p>An XR science lab for SPM students (Form 4 and 5). This is the high-fidelity alpha prototype; every screen below is clickable.</p>
+    <div class="logo"><svg viewBox="0 0 48 48" width="40" height="40" aria-hidden="true"><defs><linearGradient id="lg0" x1="0" x2="1"><stop offset="0" stop-color="#E63946"/><stop offset=".5" stop-color="#F4D35E"/><stop offset="1" stop-color="#3A86FF"/></linearGradient></defs><circle cx="24" cy="24" r="21" fill="#0F1B2A"/><g fill="none" stroke="url(#lg0)" stroke-width="2.6"><ellipse cx="24" cy="24" rx="15" ry="6"/><ellipse cx="24" cy="24" rx="15" ry="6" transform="rotate(60 24 24)"/><ellipse cx="24" cy="24" rx="15" ry="6" transform="rotate(-60 24 24)"/></g><circle cx="24" cy="24" r="3.6" fill="#fff"/></svg><h1 class="disp">SainsLab VR</h1></div>
+    <p>A virtual reality science lab for Taylor's Foundation in Science students. This is the high-fidelity alpha prototype; every screen below is clickable.</p>
     <div class="viewas" role="radiogroup" aria-label="View as"><span>View as</span><button role="radio" data-mode="phone" aria-checked="true">Phone</button><button role="radio" data-mode="desk" aria-checked="false">Laptop / PC</button></div>
     <ol id="navlist"></ol>
   </aside>
 
   <div class="device"><div class="screen" id="app">
   <aside class="side" aria-label="Main menu">
-    <div class="mark"><svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="lg1" x1="0" x2="1"><stop offset="0" stop-color="#E63946"/><stop offset=".5" stop-color="#F4D35E"/><stop offset="1" stop-color="#3A86FF"/></linearGradient></defs><circle cx="24" cy="24" r="21" fill="#1B2838"/><g fill="none" stroke="url(#lg1)" stroke-width="2.6"><ellipse cx="24" cy="24" rx="15" ry="6"/><ellipse cx="24" cy="24" rx="15" ry="6" transform="rotate(60 24 24)"/><ellipse cx="24" cy="24" rx="15" ry="6" transform="rotate(-60 24 24)"/></g><circle cx="24" cy="24" r="3.6" fill="#fff"/></svg><span class="wm disp">SainsLab XR</span></div>
+    <div class="mark"><svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="lg1" x1="0" x2="1"><stop offset="0" stop-color="#E63946"/><stop offset=".5" stop-color="#F4D35E"/><stop offset="1" stop-color="#3A86FF"/></linearGradient></defs><circle cx="24" cy="24" r="21" fill="#1B2838"/><g fill="none" stroke="url(#lg1)" stroke-width="2.6"><ellipse cx="24" cy="24" rx="15" ry="6"/><ellipse cx="24" cy="24" rx="15" ry="6" transform="rotate(60 24 24)"/><ellipse cx="24" cy="24" rx="15" ry="6" transform="rotate(-60 24 24)"/></g><circle cx="24" cy="24" r="3.6" fill="#fff"/></svg><span class="wm disp">SainsLab VR</span></div>
     <nav id="sidenav"></nav>
     <div class="sideuser"><span class="avatar" style="background:#0AA5B5">JM</span><span><b>Jovan Maurelio</b><small>Taylor's University</small></span></div>
     <button class="btn ghost sm" data-mode="phone" style="margin-top:6px">Switch to phone view</button>
   </aside>
-  <header class="deskbar"><span class="crumb">SainsLab XR / <b id="crumb">Home</b></span><span class="right"><span class="chip" style="background:var(--good-soft);color:var(--good)"><span class="dot"></span>Campus server online</span><button class="btn line sm" id="soundTop" aria-pressed="true">Sound on</button><button class="avatar" data-go="prefs" aria-label="Preferences" style="background:#0AA5B5">JM</button></span></header>
+  <header class="deskbar"><span class="crumb">SainsLab VR / <b id="crumb">Home</b></span><span class="right"><span class="chip" style="background:var(--good-soft);color:var(--good)"><span class="dot"></span>Campus server online</span><button class="btn line sm" id="soundTop" aria-pressed="true">Sound on</button><button class="avatar" data-go="prefs" aria-label="Preferences" style="background:#0AA5B5">JM</button></span></header>
 
   <!-- SIGN IN -->
   <section class="view" id="v-signin">
     <div class="status"><span>10:26</span><span>Taylor's Wi-Fi</span></div>
     <div class="si-body">
-      <div class="mark"><svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="lg2" x1="0" x2="1"><stop offset="0" stop-color="#E63946"/><stop offset=".5" stop-color="#F4D35E"/><stop offset="1" stop-color="#3A86FF"/></linearGradient></defs><circle cx="24" cy="24" r="21" fill="#1B2838"/><g fill="none" stroke="url(#lg2)" stroke-width="2.6"><ellipse cx="24" cy="24" rx="15" ry="6"/><ellipse cx="24" cy="24" rx="15" ry="6" transform="rotate(60 24 24)"/><ellipse cx="24" cy="24" rx="15" ry="6" transform="rotate(-60 24 24)"/></g><circle cx="24" cy="24" r="3.6" fill="#fff"/></svg><span class="wordmark disp">SainsLab XR</span></div>
-      <p style="font-size:18px;line-height:1.4;max-width:30ch" data-i18n="tagline">The heart, plants, electrolysis, motors and the solar system in 3D, AR and VR. See it, try it and investigate it yourself.</p>
+      <div class="mark"><svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="lg2" x1="0" x2="1"><stop offset="0" stop-color="#E63946"/><stop offset=".5" stop-color="#F4D35E"/><stop offset="1" stop-color="#3A86FF"/></linearGradient></defs><circle cx="24" cy="24" r="21" fill="#1B2838"/><g fill="none" stroke="url(#lg2)" stroke-width="2.6"><ellipse cx="24" cy="24" rx="15" ry="6"/><ellipse cx="24" cy="24" rx="15" ry="6" transform="rotate(60 24 24)"/><ellipse cx="24" cy="24" rx="15" ry="6" transform="rotate(-60 24 24)"/></g><circle cx="24" cy="24" r="3.6" fill="#fff"/></svg><span class="wordmark disp">SainsLab VR</span></div>
+      <p style="font-size:18px;line-height:1.4;max-width:30ch" data-i18n="tagline">The heart, plants, electrolysis, motors and the solar system in 3D and in virtual reality. See it, try it and investigate it yourself.</p>
       <div class="thermal" style="width:120px"></div>
-      <label class="field"><span data-i18n="sid">Student ID</span><input id="sid" value="M-0417" autocomplete="off"></label>
-      <button class="btn line" id="ssoBtn" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.3)">Sign in with DELIMa account</button>
+      <label class="field"><span data-i18n="sid">Student ID</span><input id="sid" value="0360417" autocomplete="off"></label>
+      <button class="btn line" id="ssoBtn" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.3)">Sign in with Taylor's account</button>
       <div class="field"><span data-i18n="language">Language</span><div class="langs" data-langs></div></div>
       <div class="field"><span data-i18n="useOn">Use SainsLab on</span><div class="seg2" role="radiogroup" aria-label="Device">
-        <button role="radio" data-mode="phone" aria-checked="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg><span><b data-i18n="mPhone">Phone</b><small data-i18n="mPhoneS">AR on your desk</small></span></button>
+        <button role="radio" data-mode="phone" aria-checked="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg><span><b data-i18n="mPhone">Phone</b><small data-i18n="mPhoneS">VR with a Cardboard viewer</small></span></button>
         <button role="radio" data-mode="desk" aria-checked="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></svg><span><b data-i18n="mDesk">Laptop / PC</b><small data-i18n="mDeskS">Class and lab view</small></span></button>
       </div></div>
       <div style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
         <button class="btn hot" id="signinBtn" style="min-height:54px;font-size:17px" data-i18n="signIn">Sign in</button>
-        <p class="fine" data-i18n="privacy">Your camera is only used for AR on your own device. Scores are shared with your teacher. You can change this in Preferences.</p>
+        <p class="fine" data-i18n="privacy">Phone motion sensors are only used for VR on your own device. Scores are shared with your lecturer. You can change this in Preferences.</p>
       </div>
     </div>
   </section>
@@ -486,8 +509,8 @@ body.desk #v-prefs .scroll>*{max-width:760px}
       <div class="hello"><div><p class="sub" data-i18n="morning">Good morning</p><h2 class="h1 disp">Jovan</h2><p class="sub">Taylor's University · Lakeside Campus</p></div><button class="avatar" data-go="prefs" aria-label="Preferences" style="background:#0AA5B5">JM</button></div>
       <div class="homegrid"><div>
         <div class="liveclass"><div class="thermal"></div><span class="chip" style="background:var(--bad);color:#fff"><span class="dot"></span>Live in 4 min</span>
-          <h3 class="disp">How the heart pumps blood</h3><p>Cikgu Farah Hanim · Biology · 28 students joined</p>
-          <button class="btn hot" data-go="class"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 10l5-3v10l-5-3z"/><rect x="3" y="6" width="12" height="12" rx="2"/></svg>Join live class</button></div>
+          <h3 class="disp">How the heart pumps blood</h3><p>Dr Farah Hanim · Biology · 28 students joined</p>
+          <button class="btn hot" data-go="class"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 10l5-3v10l-5-3z"/><rect x="3" y="6" width="12" height="12" rx="2"/></svg>Join VR class</button></div>
         <h3 class="h2 disp" data-i18n="library">Science models</h3>
         <div id="lib"></div>
       </div><div>
@@ -514,7 +537,7 @@ body.desk #v-prefs .scroll>*{max-width:760px}
           <button id="tLabels" aria-pressed="true" aria-label="Labels" title="Labels"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h11l5 5-5 5H4z"/></svg></button>
           <button id="tCut" aria-pressed="false" aria-label="Cutaway" title="Cut in half"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18"/><path d="M5 6h4v12H5zM15 6h4v12h-4z" opacity=".6"/></svg></button>
           <button id="tXray" aria-pressed="false" aria-label="X-ray" title="See-through"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="3"/></svg></button>
-          <button id="tAR" aria-pressed="false" aria-label="View in AR" title="View in AR"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg></button>
+          <button id="tVR" aria-pressed="false" aria-label="View in VR" title="View in VR"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8.5C3 7.1 4.1 6 5.5 6h13C19.9 6 21 7.1 21 8.5v6c0 1.4-1.1 2.5-2.5 2.5h-3.2l-2-2.6a1.6 1.6 0 0 0-2.6 0l-2 2.6H5.5C4.1 17 3 15.9 3 14.5z"/><circle cx="8" cy="11.5" r="1.6"/><circle cx="16" cy="11.5" r="1.6"/></svg></button>
           <button id="tReset" aria-label="Reset view" title="Reset view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg></button>
         </div>
         <div class="vbottom" id="vbottom"></div>
@@ -527,13 +550,13 @@ body.desk #v-prefs .scroll>*{max-width:760px}
   <section class="view" id="v-class">
     <div class="status"><span>10:30</span><span>● LIVE</span></div>
     <div class="ehead"><button class="iconbtn" data-go="home" aria-label="Leave class"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 5l-7 7 7 7"/></svg></button>
-      <div class="t"><b class="disp">Live class: the heart</b><span>Cikgu Farah Hanim · <span id="clsTime">00:00</span> · 29 in class</span></div></div>
+      <div class="t"><b class="disp">VR classroom: the heart</b><span>Dr Farah Hanim · <span id="clsTime">00:00</span> · 29 in class</span></div></div>
     <div class="ebody">
       <div class="vwrap" id="cwrap">
         <div class="v3d" id="c3d"></div>
         <div class="pip" id="pip"></div>
-        <div class="caption glass" aria-live="polite" id="caption"><small id="capWho">Cikgu Farah Hanim</small><span id="capTxt">Connecting…</span><div class="tr" id="capTr"></div></div>
-        <div class="ringing" id="ringing"><div class="av" id="ringAv"></div><b style="font-size:22px" class="disp">Cikgu Farah Hanim</b><span id="ringTxt" class="sub" style="color:#9FB0C0">Joining live class…</span></div>
+        <div class="caption glass" aria-live="polite" id="caption"><small id="capWho">Dr Farah Hanim</small><span id="capTxt">Connecting…</span><div class="tr" id="capTr"></div></div>
+        <div class="ringing" id="ringing"><div class="av" id="ringAv"></div><b style="font-size:22px" class="disp">Dr Farah Hanim</b><span id="ringTxt" class="sub" style="color:#9FB0C0">Joining VR classroom…</span></div>
       </div>
       <div class="panel" id="cpanel"></div>
     </div>

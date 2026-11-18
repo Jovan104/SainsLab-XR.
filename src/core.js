@@ -42,7 +42,7 @@ const ICON={
 
 /* ---------- i18n (English + Bahasa Melayu) ---------- */
 let lang="en";
-const T_MS={tagline:"Jantung, tumbuhan, sel elektrolisis, motor dan sistem suria dalam 3D, AR dan VR. Lihat, cuba dan siasat sendiri.",sid:"ID pelajar",language:"Bahasa",useOn:"Guna SainsLab pada",mPhone:"Telefon",mPhoneS:"AR di meja anda",mDesk:"Komputer riba / PC",mDeskS:"Paparan kelas dan makmal",signIn:"Log masuk",privacy:"Kamera hanya digunakan untuk AR pada peranti anda. Markah dikongsi dengan guru anda.",morning:"Selamat pagi",library:"Model sains",
+const T_MS={tagline:"Jantung, tumbuhan, sel elektrolisis, motor dan sistem suria dalam 3D dan realiti maya. Lihat, cuba dan siasat sendiri.",sid:"ID pelajar",language:"Bahasa",useOn:"Guna SainsLab pada",mPhone:"Telefon",mPhoneS:"VR dengan kotak Cardboard",mDesk:"Komputer riba / PC",mDeskS:"Paparan kelas dan makmal",signIn:"Log masuk",privacy:"Sensor gerakan telefon hanya digunakan untuk VR pada peranti anda. Markah dikongsi dengan pensyarah anda.",morning:"Selamat pagi",library:"Model sains",
  notes:"Nota",explore:"Teroka",sim:"Simulasi",shop:"Makmal",fix:"Siasat",quiz:"Kuiz"};
 const T_EN={};$$("[data-i18n]").forEach(e=>T_EN[e.dataset.i18n]=e.textContent);
 Object.assign(T_EN,{notes:"Notes",explore:"Explore",sim:"Simulate",shop:"Lab",fix:"Investigate",quiz:"Quiz"});
@@ -151,7 +151,7 @@ function go(r){const R=parseRoute(r);if(!$("#v-"+R.view)){R.view="signin"}
   const route=R.view==="engine"?(curEngine+(TABKEY[curTab]?"-"+TABKEY[curTab]:"")):R.view;
   if(location.hash!=="#"+route)history.replaceState(null,"","#"+route);
   markNav(route);
-  $("#crumb").textContent=R.view==="engine"?ENGINES[curEngine].vehicle+" · "+tr(curTab):({home:"Home",planner:"Planner",quests:"Quests",class:"Live class",progress:"Progress",prefs:"Preferences",signin:"Sign in"})[R.view]||"";
+  $("#crumb").textContent=R.view==="engine"?ENGINES[curEngine].vehicle+" · "+tr(curTab):({home:"Home",planner:"Planner",quests:"Quests",class:"VR class",progress:"Progress",prefs:"Preferences",signin:"Sign in"})[R.view]||"";
   if(enterHooks[R.view])enterHooks[R.view](R,prev);
 }
 function markNav(route){const R=parseRoute(route);

@@ -1,4 +1,4 @@
-/* ===================== Live MR class with real sound ===================== */
+/* ===================== Shared VR classroom with avatars and real sound ===================== */
 const AV_FARAH=`<svg viewBox="0 0 120 150" aria-hidden="true"><rect width="120" height="150" fill="#1C3A4F"/><rect y="105" width="120" height="45" fill="#0AA5B5" opacity=".25"/>
 <path d="M14 150c2-30 20-46 46-46s44 16 46 46z" fill="#2B4C7E"/><path d="M26 150c4-20 16-30 34-30s30 10 34 30z" fill="#F4F1EC"/>
 <path d="M60 22c-24 0-38 18-38 42 0 22 10 36 18 44 6 6 14 9 20 9s14-3 20-9c8-8 18-22 18-44 0-24-14-42-38-42z" fill="#2E6F73"/>
@@ -9,7 +9,7 @@ const AV_FARAH=`<svg viewBox="0 0 120 150" aria-hidden="true"><rect width="120" 
 const AV_JOVAN=`<svg viewBox="0 0 120 150" aria-hidden="true"><rect width="120" height="150" fill="#2A2F45"/><path d="M14 150c2-30 20-46 46-46s44 16 46 46z" fill="#FF5A1F"/><rect x="52" y="92" width="16" height="16" fill="#D7A27F"/>
 <ellipse cx="60" cy="66" rx="22" ry="26" fill="#E2B48F"/><path d="M37 60c0-20 10-30 23-30s24 8 24 28c-4-8-12-12-24-12s-19 6-23 14z" fill="#1E1A18"/>
 <ellipse cx="51" cy="66" rx="2.6" ry="3" fill="#2A1C14"/><ellipse cx="69" cy="66" rx="2.6" ry="3" fill="#2A1C14"/><path d="M53 82q7 4 14 0" stroke="#8A4B3E" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>`;
-const CLS_PEOPLE=[["FH","Cikgu Farah","#2E6F73"],["JM","Jovan (you)","#FF5A1F"],["AR","Arjun R.","#7C83E8"],["ML","Mei Ling","#1E9E5A"],["HZ","Hafiz Z.","#C9A447"],["NS","Nurul S.","#D94F8C"]];
+const CLS_PEOPLE=[["FH","Dr Farah","#2E6F73"],["JM","Jovan (you)","#FF5A1F"],["AR","Arjun R.","#7C83E8"],["ML","Mei Ling","#1E9E5A"],["HZ","Hafiz Z.","#C9A447"],["NS","Nurul S.","#D94F8C"]];
 const CLS_SCRIPT=[
  {t:"Good morning, everyone. Today we look at how the heart pumps blood. You should all see the same heart on your screens, and I'll move it as I talk. Listen: that lub-dub is the valves closing.",bm:"Selamat pagi, semua. Hari ini kita lihat bagaimana jantung mengepam darah. Semua patut nampak jantung yang sama di skrin. Dengar: bunyi lub-dub itu ialah injap yang tertutup.",act:c=>{c.V.reset();c.lay(["deoxy","oxy","air"]);c.S.act=72}},
  {t:"Let's follow the blood. Oxygen-poor blood, shown in blue, comes back from the body through the vena cavae into the right atrium.",bm:"Mari ikut aliran darah. Darah kurang oksigen, berwarna biru, kembali dari badan melalui vena kava ke dalam atrium kanan.",act:c=>{c.lay(["deoxy"]);c.show("VC")}},
@@ -25,17 +25,40 @@ const CLS_Q=[["Why is the left ventricle wall thicker?","Because it pumps blood 
  ["What happens in a heart attack?","A coronary artery on the surface of the heart gets blocked, so part of the heart muscle gets no oxygen and stops working properly.","Arteri koronari pada permukaan jantung tersumbat, jadi sebahagian otot jantung tidak mendapat oksigen.","CA"]];
 
 const CLS={V:null,S:null,run:0,i:0,t0:0,timer:null,snd:null,mic:false,hand:false,bm:true,poll:null,ans:null,waiting:false,busy:false,qmode:false};
-function clsSetup(){if(CLS.V)return;CLS.V=new Viewer($("#c3d"),{onPick:id=>{const P=CLS.V.parts[id];if(P)toast(P.meta.n)}});if(CLS.V.dead)return;
-  const e=ENGINES.heart,keep=e.S;CLS.S=JSON.parse(JSON.stringify(e.S));CLS.S.slow=.5;e.S=CLS.S;CLS.V.load(e);e.S=keep;CLS.V.showLabels=false;CLS.V.setCut(true);CLS.V.ctl.autoRotate=false}
+function nameTag(T,text,col){const c=document.createElement("canvas");c.width=320;c.height=72;const g=c.getContext("2d");g.font="700 30px Archivo, Arial";const w=Math.min(300,g.measureText(text).width+44);
+  g.fillStyle="rgba(10,18,28,.85)";g.beginPath();g.roundRect?g.roundRect((320-w)/2,8,w,56,28):g.rect((320-w)/2,8,w,56);g.fill();g.fillStyle=col;g.beginPath();g.arc((320-w)/2+22,36,8,0,7);g.fill();g.fillStyle="#fff";g.textBaseline="middle";g.fillText(text,(320-w)/2+38,38);
+  const s=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(c),transparent:true,depthTest:false}));s.scale.set(1.5,.34,1);s.renderOrder=9;return s}
+function clsAvatars(V){const T=THREE,g=new T.Group();V.scene.add(g);CLS.avs=[];
+  const skin=[0xC98E6B,0xE2B48F,0x8D5A3B,0xD9A37E,0xB97A56,0xEBC29E];
+  const mk=(name,col,x,z,i,lead)=>{const a=new T.Group();a.position.set(x,0,z);a.lookAt(0,0,lead?-.6:0);
+    const cm=new T.MeshStandardMaterial({color:col,roughness:.6});const body=new T.Mesh(new T.CylinderGeometry(.26,.38,1.15,20),cm);body.position.y=.62;a.add(body);
+    const sh=new T.Mesh(new T.SphereGeometry(.31,20,12),cm);sh.scale.set(1.25,.55,1);sh.position.y=1.18;a.add(sh);
+    const head=new T.Mesh(new T.SphereGeometry(.25,24,16),new T.MeshStandardMaterial({color:skin[i%6],roughness:.7}));head.position.y=1.58;a.add(head);
+    const vis=new T.Mesh(new T.BoxGeometry(.4,.15,.16),new T.MeshStandardMaterial({color:0x1B232C,roughness:.3,metalness:.4}));vis.position.set(0,1.62,.2);a.add(vis);
+    const strip=new T.Mesh(new T.BoxGeometry(.3,.025,.01),new T.MeshBasicMaterial({color:col}));strip.position.set(0,1.62,.285);a.add(strip);
+    const tag=nameTag(T,name,"#"+new T.Color(col).getHexString());tag.position.y=2.12;a.add(tag);
+    if(lead){const arm=new T.Mesh(new T.CylinderGeometry(.06,.06,.6,10),cm);arm.position.set(.34,1.1,.22);arm.rotation.x=-1.1;a.add(arm);a.userData.hand=new T.Vector3(.36,1.2,.5)}
+    a.scale.setScalar(1.45);g.add(a);CLS.avs.push({a,ph:i*1.7,head});return a};
+  const ppl=[["Arjun R.",0x7C83E8],["Mei Ling",0x1E9E5A],["Hafiz Z.",0xC9A447],["Nurul S.",0xD94F8C],["Wei Jie",0x3A86FF],["Aisyah K.",0xE07A5F],["Daniel T.",0x6B8E9E],["Priya M.",0xA26BD1]];
+  const R=6.3;ppl.forEach(([n,c],i)=>{const th=(-1.25+i*2.5/(ppl.length-1));mk(n,c,Math.sin(th)*R,-Math.cos(th)*R,i)});
+  CLS.teacher=mk("Dr Farah",0x2E6F73,-3.4,2.6,6,true);
+  CLS.laser=new T.Mesh(new T.CylinderGeometry(.022,.022,1,8),new T.MeshBasicMaterial({color:0xFF5A1F,transparent:true,opacity:.85}));CLS.laser.visible=false;g.add(CLS.laser);
+  const dot=new T.Mesh(new T.SphereGeometry(.06,12,8),new T.MeshBasicMaterial({color:0xFF5A1F}));dot.visible=false;g.add(dot);CLS.ldot=dot;
+  CLS.avg=g}
+function clsSetup(){if(CLS.V)return;CLS.V=new Viewer($("#c3d"),{onPick:id=>{const P=CLS.V.parts[id];if(P){CLS.V.select(id);toast(P.meta.n)}},onVR:()=>clsPanel(),
+    onFrame:(dt)=>{const t=performance.now()/1000;(CLS.avs||[]).forEach(o=>{o.a.position.y=Math.sin(t*1.3+o.ph)*.035;o.head.rotation.y=Math.sin(t*.4+o.ph)*.35});
+      if(CLS.laser&&CLS.pt){const h=CLS.teacher.localToWorld(CLS.teacher.userData.hand.clone()),p=CLS.V.anchor(CLS.pt);const d=p.clone().sub(h),L=d.length();CLS.laser.position.copy(h).addScaledVector(d,.5);CLS.laser.scale.set(1,L,1);CLS.laser.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());CLS.ldot.position.copy(p)}}});if(CLS.V.dead)return;
+  const e=ENGINES.heart,keep=e.S;CLS.S=JSON.parse(JSON.stringify(e.S));CLS.S.slow=.5;e.S=CLS.S;CLS.V.load(e);e.S=keep;CLS.V.showLabels=false;CLS.V.setCut(true);CLS.V.ctl.autoRotate=false;
+  CLS.V.room3d().visible=true;clsAvatars(CLS.V);CLS.V.HP.set(2.4,4.2,12.5);CLS.V.HT.set(0,1.7,0);CLS.V.cam.position.copy(CLS.V.HP);CLS.V.cg.copy(CLS.V.HP);CLS.V.ctl.target.copy(CLS.V.HT);CLS.V.tg.copy(CLS.V.HT)}
 const clsCtx={get V(){return CLS.V},get S(){return CLS.S},
-  show(id){const V=CLS.V;if(!V)return;V.select(id);V.only=id?[id]:null;V.showLabels=!!id;if(id)V.focus(id,3.6);else V.reset()},
+  show(id){const V=CLS.V;if(!V)return;V.select(id);V.only=id?[id]:null;V.showLabels=!!id&&!V.vr;CLS.pt=id;if(CLS.laser){CLS.laser.visible=!!id;CLS.ldot.visible=!!id}if(id)V.focus(id,4.6);else V.reset()},
   lay(on){const V=CLS.V;if(!V)return;Object.keys(V.layers).forEach(k=>V.layers[k]=on.includes(k))},
   loud(v){if(CLS.S)CLS.S._vol=v}};
-function clsSpeak(line,who,onend){const run=CLS.run;$("#capWho").textContent=who==="m"?"Jovan Maurelio (you)":"Cikgu Farah Hanim";$("#capTxt").textContent=line.t;$("#capTr").textContent=CLS.bm&&line.bm?"BM: "+line.bm:"";
+function clsSpeak(line,who,onend){const run=CLS.run;$("#capWho").textContent=who==="m"?"Jovan Maurelio (you)":"Dr Farah Hanim";$("#capTxt").textContent=line.t;$("#capTr").textContent=CLS.bm&&line.bm?"BM: "+line.bm:"";
   const pip=$("#pip");pip.classList.toggle("talk",who!=="m");let mo=null;if(who!=="m"){let k=0;mo=setInterval(()=>{k++;const o=pip.querySelector(".m1"),c=pip.querySelector(".m0");if(o&&c){const open=k%3!==0&&Math.random()>.25;o.style.display=open?"":"none";c.style.display=open?"none":""}},140)}
   say(line.t,{who:who==="m"?"m":"f",rate:who==="m"?1.05:.98,onend:()=>{clearInterval(mo);const o=pip.querySelector(".m1"),c=pip.querySelector(".m0");if(o){o.style.display="none";c.style.display=""}pip.classList.remove("talk");if(run===CLS.run)setTimeout(()=>{if(run===CLS.run)onend&&onend()},650)}})}
 function clsNext(){const run=CLS.run;if(CLS.hand&&!CLS.qmode){clsHand();return}
-  if(CLS.i>=CLS_SCRIPT.length){CLS.busy=false;$("#capTxt").textContent="Class has ended. Cikgu Farah is still online if you raise your hand.";$("#capTr").textContent="";mark("heart","class");return}
+  if(CLS.i>=CLS_SCRIPT.length){CLS.busy=false;$("#capTxt").textContent="Class has ended. Dr Farah is still online if you raise your hand.";$("#capTr").textContent="";mark("heart","class");return}
   const L=CLS_SCRIPT[CLS.i++];CLS.busy=true;if(L.act)L.act(clsCtx);
   if(L.poll){CLS.poll=L.poll;CLS.ans=null;clsPanel();clsSpeak(L,"f",()=>{CLS.waiting=true;let left=12;const tick=()=>{if(run!==CLS.run)return;if(CLS.ans!=null||left<=0){CLS.waiting=false;CLS.poll.done=true;clsPanel();setTimeout(()=>run===CLS.run&&clsNext(),900);return}left--;const el=$("#pollLeft");if(el)el.textContent=left+" s left";setTimeout(tick,1000)};tick()});return}
   clsSpeak(L,"f",clsNext)}
@@ -47,25 +70,27 @@ function clsPanel(){const p=CLS.poll;
    <button id="cMic" aria-pressed="${CLS.mic}"><span class="iconbtn">${ICON.mic}</span>${CLS.mic?"Mic on":"Mic off"}</button>
    <button id="cSpk" aria-pressed="${!SND.on}"><span class="iconbtn">${SND.on?ICON.sound:ICON.mute}</span>${SND.on?"Speaker":"Muted"}</button>
    <button id="cHand" aria-pressed="${CLS.hand}"><span class="iconbtn">${ICON.hand}</span>${CLS.hand?"Hand up":"Raise hand"}</button>
+   <button id="cVR" aria-pressed="${!!(CLS.V&&CLS.V.vr)}"><span class="iconbtn">${VR_ICON}</span>VR view</button>
    <button id="cBM" aria-pressed="${CLS.bm}"><span class="iconbtn" style="font-weight:800;font-size:13px">BM</span>Captions</button>
    <button class="end" id="cEnd"><span class="iconbtn">${ICON.phone}</span>Leave</button></div>
-  ${CLS.qmode===true?`<div class="pcard" style="border-color:var(--cool)"><h4>Ask Cikgu Farah</h4><p class="sub small">Pick your question. It is read out to the class.</p><div class="opts">${CLS_Q.map(([q],k)=>`<button data-q="${k}"><i>?</i><span>${q}</span><span></span></button>`).join("")}</div></div>`:""}
+  ${CLS.qmode===true?`<div class="pcard" style="border-color:var(--cool)"><h4>Ask Dr Farah</h4><p class="sub small">Pick your question. It is read out to the class.</p><div class="opts">${CLS_Q.map(([q],k)=>`<button data-q="${k}"><i>?</i><span>${q}</span><span></span></button>`).join("")}</div></div>`:""}
   ${p&&!p.hidden?`<div class="pcard" id="pollCard"><span class="k">Live poll</span><h4 class="disp" style="font-size:17px">${p.q}</h4>${p.done?p.o.map((o,k)=>`<div class="pollres"><div style="display:flex;justify-content:space-between;font-size:13.5px;font-weight:${k===p.a?800:500}"><span>${o}${k===p.a?" ✓":""}${CLS.ans===k?" (you)":""}</span><span>${p.res[k]}%</span></div><div class="meter"><i style="width:${p.res[k]}%;background:${k===p.a?"var(--good)":"var(--ink3,#9AA6B2)"}"></i></div></div>`).join(""):`<div class="opts">${p.o.map((o,k)=>`<button data-p="${k}" style="${CLS.ans===k?"border-color:var(--ink);background:var(--soft)":""}"><i>${"ABC"[k]}</i><span>${o}</span><span>${CLS.ans===k?"✓":""}</span></button>`).join("")}</div><p class="sub small" id="pollLeft">${CLS.waiting?"12 s left":"Opens when Dr Farah asks"}</p>`}</div>`:""}
   <div class="pcard"><h4>In class · 29</h4><div class="people">${CLS_PEOPLE.map(([i,n,c])=>`<span><i style="background:${c}">${i}</i>${n}</span>`).join("")}<span><i style="background:#55606B">+23</i>more</span></div></div>
-  <div class="pcard"><h4>What you are seeing</h4><p class="sub small">Cikgu Farah controls the shared heart model. Each student sees it in 3D on a phone or laptop, or in mixed reality on a headset in the science lab, all in sync. Her voice plays through your speaker, with live English and Bahasa Melayu captions. Tap a part to see its name.</p></div>`;
+  <div class="pcard"><h4>What you are seeing</h4><p class="sub small">You and your classmates stand around the same beating heart in a shared virtual lab. Everyone is an avatar, and Dr Farah points at parts with a laser while she moves the model for the whole class. Join on a VR headset, a phone in a Cardboard viewer (tap VR view) or a laptop. Her voice plays through your speaker, with live English and Bahasa Melayu captions.</p></div>`;
   $("#cMic").onclick=()=>{CLS.mic=!CLS.mic;clsPanel();toast(CLS.mic?"Microphone on. The class can hear you.":"Microphone off")};
   $("#cSpk").onclick=()=>{actx();setSound(!SND.on);clsPanel();toast(SND.on?"Speaker on":"Speaker muted. Captions keep going.")};
-  $("#cHand").onclick=()=>{CLS.hand=!CLS.hand;if(!CLS.hand&&CLS.qmode===true){CLS.qmode=false;clsPanel();if(CLS.busy&&CLS.i<CLS_SCRIPT.length)clsNext();return}clsPanel();if(CLS.hand){chime();toast("Hand raised. Cikgu Farah will come to you after this point.");if(!CLS.busy)clsHand()}};
+  $("#cHand").onclick=()=>{CLS.hand=!CLS.hand;if(!CLS.hand&&CLS.qmode===true){CLS.qmode=false;clsPanel();if(CLS.busy&&CLS.i<CLS_SCRIPT.length)clsNext();return}clsPanel();if(CLS.hand){chime();toast("Hand raised. Dr Farah will come to you after this point.");if(!CLS.busy)clsHand()}};
   $("#cBM").onclick=()=>{CLS.bm=!CLS.bm;clsPanel()};
+  $("#cVR").onclick=()=>{if(!CLS.V)return;if(CLS.V.vr){CLS.V.setVR(false);clsPanel();return}vrStart(CLS.V,()=>clsPanel())};
   $("#cEnd").onclick=()=>go("home");
-  $("#cpanel").querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{if(!CLS.waiting&&CLS.ans==null&&!p.done){toast("Wait for Cikgu Farah to open the poll");return}CLS.ans=+b.dataset.p;beep(720,.08,0,"sine",.12);clsPanel()});
+  $("#cpanel").querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{if(!CLS.waiting&&CLS.ans==null&&!p.done){toast("Wait for Dr Farah to open the poll");return}CLS.ans=+b.dataset.p;beep(720,.08,0,"sine",.12);clsPanel()});
   $("#cpanel").querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>clsAsk(+b.dataset.q))}
 enterHooks.class=()=>{clsSetup();CLS.run++;const run=CLS.run;CLS.i=0;CLS.poll=null;CLS.ans=null;CLS.hand=false;CLS.qmode=false;CLS.busy=true;CLS.vol=.12;
-  $("#pip").innerHTML=AV_FARAH+`<div class="nm">Cikgu Farah Hanim</div>`;$("#ringAv").innerHTML=AV_FARAH;$("#ringTxt").textContent="Joining live class…";$("#ringing").classList.add("show");
+  $("#pip").innerHTML=AV_FARAH+`<div class="nm">Dr Farah Hanim</div>`;$("#ringAv").innerHTML=AV_FARAH;$("#ringTxt").textContent="Joining VR classroom…";$("#ringing").classList.add("show");
   $("#capTxt").textContent="Connecting…";$("#capTr").textContent="";clsPanel();actx();ringTone(1);
   setTimeout(()=>{if(run!==CLS.run)return;$("#ringTxt").textContent="Connected · audio on";},1600);
   setTimeout(()=>{if(run!==CLS.run)return;$("#ringing").classList.remove("show");chime();CLS.t0=Date.now();
     clearInterval(CLS.timer);CLS.timer=setInterval(()=>{const s=Math.floor((Date.now()-CLS.t0)/1000)+754;$("#clsTime").textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
       },150);
     if(CLS.S){CLS.S._snd=true;CLS.S._vol=.3}setTimeout(()=>run===CLS.run&&clsNext(),700)},2600)};
-leaveHooks.class=()=>{CLS.run++;hush();clearInterval(CLS.timer);if(CLS.S)CLS.S._snd=false;if(CLS.snd){CLS.snd.stop();CLS.snd=null}$("#ringing").classList.remove("show")};
+leaveHooks.class=()=>{if(CLS.V&&CLS.V.vr)CLS.V.setVR(false);CLS.run++;hush();clearInterval(CLS.timer);if(CLS.S)CLS.S._snd=false;if(CLS.snd){CLS.snd.stop();CLS.snd=null}$("#ringing").classList.remove("show")};

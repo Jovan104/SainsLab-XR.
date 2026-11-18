@@ -33,6 +33,9 @@ class Viewer{
     const r=this.r;r.setPixelRatio(Math.min(window.devicePixelRatio||1,2));r.localClippingEnabled=true;
     this.room=document.createElement("div");this.room.className="room";this.room.innerHTML=ROOM_SVG;el.appendChild(this.room);
     el.appendChild(r.domElement);this.labs=document.createElement("div");this.labs.className="labs";el.appendChild(this.labs);
+    this.vrui=document.createElement("div");this.vrui.className="vrui";this.vrui.innerHTML=`<div class="eye l"><div class="ret"><i></i></div><div class="vrcard"></div></div><div class="eye r"><div class="ret"><i></i></div><div class="vrcard"></div></div><div class="vrbar"><span class="vrhint">Look at a part for 1 second to select it</span><button class="vrexit" type="button">Exit VR</button></div>`;el.appendChild(this.vrui);
+    this.vrui.querySelector(".vrexit").onclick=()=>{this.setVR(false);this.opt.onVR&&this.opt.onVR(false)};
+    this.stereo=new T.StereoCamera();this.stereo.eyeSep=.09;this.vr=false;this.xrOn=false;this.gz={id:null,t:0,k:0};this.gray=new T.Raycaster();this.c0=new T.Vector2(0,0);
     this.scene=new T.Scene();this.bg=new T.Color(0x0D1520);this.scene.background=this.bg;this.scene.fog=new T.Fog(0x0D1520,14,30);
     this.cam=new T.PerspectiveCamera(36,1,.05,80);
     this.ctl=new T.OrbitControls(this.cam,r.domElement);this.ctl.enableDamping=true;this.ctl.dampingFactor=.08;this.ctl.minDistance=1.2;this.ctl.maxDistance=16;this.ctl.autoRotateSpeed=1.2;
@@ -54,7 +57,8 @@ class Viewer{
       m.set((e.clientX-b.left)/b.width*2-1,-(e.clientY-b.top)/b.height*2+1);ray.setFromCamera(m,this.cam);
       const h=ray.intersectObjects(this.root.children,true).find(x=>{let o=x.object;if(!o.visible||o.isPoints)return false;while(o&&!o.userData.part)o=o.parent;return o&&o.visible&&!(this.cut&&o.userData.housing&&x.point.z>0)});
       if(h){let o=h.object;while(o&&!o.userData.part)o=o.parent;if(o&&this.opt.onPick)this.opt.onPick(o.userData.part)}});
-    const loop=()=>{requestAnimationFrame(loop);this.frame()};loop();
+    const loop=()=>{requestAnimationFrame(loop);if(!this.xrOn)this.frame()};loop();
+    this.ori=null;window.addEventListener("deviceorientation",e=>{if(this.vr&&e.alpha!=null)this.ori=[e.alpha,e.beta,e.gamma]});
   }
   /* ---------- building ---------- */
   load(E){const T=THREE;this.clear();this.E=E;this.S=E.S;const V=this;
@@ -93,19 +97,48 @@ class Viewer{
   setCut(b){this.cut=b;this.applyLook()} setXray(b){this.xray=b;this.applyLook()}
   setAR(b){this.ar=b;this.el.classList.toggle("ar",b);this.scene.background=b?null:this.bg;this.scene.fog=b?null:new THREE.Fog(0x0D1520,14,30);this.floor.visible=!b;this.shadow.visible=b;
     if(b){const bb=new THREE.Box3().setFromObject(this.root);const s=bb.getSize(new THREE.Vector3());this.shadow.scale.set(s.x*.62,s.z*.62||1,1)}}
+  /* ---------- virtual reality ---------- */
+  room3d(){const T=THREE;if(this.env)return this.env;const g=new T.Group();
+    const c=document.createElement("canvas");c.width=16;c.height=256;const x=c.getContext("2d");const gr=x.createLinearGradient(0,0,0,256);gr.addColorStop(0,"#06101C");gr.addColorStop(.45,"#123049");gr.addColorStop(.52,"#1E5A6B");gr.addColorStop(.56,"#0E1B29");gr.addColorStop(1,"#0A121C");x.fillStyle=gr;x.fillRect(0,0,16,256);
+    const dome=new T.Mesh(new T.SphereGeometry(28,32,16),new T.MeshBasicMaterial({map:new T.CanvasTexture(c),side:T.BackSide,fog:false}));g.add(dome);
+    const bm=new T.MeshStandardMaterial({color:0x2A3B4C,roughness:.7}),tm=new T.MeshStandardMaterial({color:0xD9E2EA,roughness:.4}),lm=new T.MeshBasicMaterial({color:0x7FE3F0});
+    for(let i=0;i<10;i++){const a=i/10*6.283+.3,R=11.5;const b=new T.Group();b.position.set(Math.cos(a)*R,0,Math.sin(a)*R);b.lookAt(0,0,0);
+      const k=new T.Mesh(new T.BoxGeometry(2.6,.9,1),bm);k.position.y=.45;b.add(k);const t=new T.Mesh(new T.BoxGeometry(2.7,.06,1.1),tm);t.position.y=.93;b.add(t);
+      const f=new T.Mesh(new T.CylinderGeometry(.12,.2,.4,12),new T.MeshStandardMaterial({color:0x9FD8E6,transparent:true,opacity:.6}));f.position.set(-.7,1.16,0);b.add(f);
+      const l=new T.Mesh(new T.BoxGeometry(2.2,.04,.04),lm);l.position.set(0,3.4,0);b.add(l);g.add(b)}
+    g.visible=false;this.scene.add(g);this.env=g;return g}
+  setVR(b){this.vr=b;this.el.classList.toggle("vr",b);const w=this.el.closest(".vwrap");if(w)w.classList.toggle("vron",b);const app=document.getElementById("app");if(app)app.classList.toggle("vrmode",b);
+    const hint=this.vrui.querySelector(".vrhint");if(hint)hint.textContent=this.el.clientWidth<this.el.clientHeight?"Turn your phone sideways and look at a part to select it":"Look at a part for 1 second to select it";this.room3d().visible=b;this.scene.fog=b?new THREE.Fog(0x0D1520,18,40):new THREE.Fog(0x0D1520,14,30);this.lw=0;this.ori=null;this.gz={id:null,t:0,k:0};this.gaze(null,0);
+    if(b){this.preVR={l:this.showLabels};this.showLabels=false}else if(this.preVR){this.showLabels=this.preVR.l}}
+  gaze(id,k){this.vrui.querySelectorAll(".ret i").forEach(i=>i.style.background=`conic-gradient(#FF5A1F ${k*360}deg,rgba(255,255,255,.25) 0)`);
+    const P=id&&this.parts[id];this.vrui.querySelectorAll(".vrcard").forEach(c=>{c.style.display=P?"block":"none";if(P)c.innerHTML=`<b>${P.meta.n}</b>${this.sel===id&&P.meta.d?`<span>${P.meta.d}</span>`:""}`})}
+  gazeTick(dt){const ray=this.gray;ray.setFromCamera(this.c0,this.cam);
+    const h=ray.intersectObjects(this.root.children,true).find(x=>{let o=x.object;if(!o.visible||o.isPoints||o.isSprite)return false;while(o&&!o.userData.part)o=o.parent;return o&&o.visible&&!(this.cut&&o.userData.housing&&x.point.z>0)});
+    let id=null;if(h){let o=h.object;while(o&&!o.userData.part)o=o.parent;id=o&&o.userData.part}
+    if(id&&this.parts[id]&&this.parts[id].meta.nolabel)id=null;
+    if(id!==this.gz.id){this.gz={id,t:0,k:0}}else if(id&&this.sel!==id){this.gz.t+=dt;if(this.gz.t>=1.1){this.opt.onPick&&this.opt.onPick(id)}}
+    const k=id&&this.sel!==id?Math.min(1,this.gz.t/1.1):(id?1:0);if(Math.abs(k-this.gz.k)>.02||k===0||k===1){this.gz.k=k;this.gaze(id,k)}}
+  async enterXR(){const T=THREE;if(!navigator.xr)throw new Error("no xr");const ses=await navigator.xr.requestSession("immersive-vr",{optionalFeatures:["local-floor"]});
+    this.r.xr.enabled=true;this.r.xr.setReferenceSpaceType("local-floor");await this.r.xr.setSession(ses);this.xrOn=true;this.room3d().visible=true;
+    this.root.scale.setScalar(.38);this.root.position.set(0,.85,-1.7);this.r.setAnimationLoop(()=>this.frame(true));
+    ses.addEventListener("end",()=>{this.r.setAnimationLoop(null);this.r.xr.enabled=false;this.xrOn=false;this.root.scale.setScalar(1);this.root.position.set(0,0,0);this.room3d().visible=this.vr;this.lw=0})}
   select(id){this.sel=id;Object.entries(this.parts).forEach(([k,P])=>P.g.traverse(o=>{if(!o.isMesh||!o.material||!o.material.emissive)return;if(k===id){o.material.emissive.setHex(0xFF5A1F);o.material.emissiveIntensity=.45}else{o.material.emissive.setHex(o.userData.em||0);o.material.emissiveIntensity=o.userData.ei??1}}));
     Object.entries(this.labEls).forEach(([k,b])=>b.classList.toggle("sel",k===id))}
   remove(id,on){const P=this.parts[id];if(P){P.removed=on;P.t0=performance.now()}}
   /* ---------- frame ---------- */
-  frame(){if(this.dead||!this.E||!this.el.offsetParent)return;const now=performance.now(),dt=Math.min(.05,(now-this.last)/1000);this.last=now;
-    const w=this.el.clientWidth,h=this.el.clientHeight;if(w&&h&&(w!==this.lw||h!==this.lh)){this.lw=w;this.lh=h;this.r.setSize(w,h,false);this.cam.aspect=w/h;this.cam.updateProjectionMatrix();
+  frame(xr){if(this.dead||!this.E||(!xr&&!this.el.offsetParent))return;const now=performance.now(),dt=Math.min(.05,(now-this.last)/1000);this.last=now;
+    const w=this.el.clientWidth,h=this.el.clientHeight;if(!this.xrOn&&w&&h&&(w!==this.lw||h!==this.lh)){this.lw=w;this.lh=h;this.r.setSize(w,h,false);this.cam.aspect=(this.vr?w/2:w)/h;this.cam.updateProjectionMatrix();
       if(!this.fitted){this.fitted=true;const f=this.cam.aspect<1?Math.min(2.1,1/Math.pow(this.cam.aspect,.75)):1;this.HP.sub(this.HT).multiplyScalar(f).add(this.HT);this.cam.position.copy(this.HP);this.cg.copy(this.HP)}}
     Object.values(this.parts).forEach(P=>{if(!P.base)return;P.g.position.copy(P.base);if(P.meta.dir)P.g.position.addScaledVector(this.v.set(...P.meta.dir),this.explode);
       if(P.removed!==undefined){const k=clamp((now-P.t0)/600,0,1),e=P.removed?k:1-k;P.g.position.y+=e*3;P.g.visible=e<.98}});
-    if(this.inst&&this.inst.update)this.inst.update(dt,this.S,this);
+    if(this.inst&&this.inst.update)this.inst.update(dt,this.S,this);if(this.opt.onFrame)this.opt.onFrame(dt,this);
     const showF=this.explode<.05,fs=this.E&&this.E.flowSlow?this.E.flowSlow(this.S):(this.S.slow??1);this.flows.forEach(f=>f.update(dt*fs,showF&&this.layers[f.layer]!==false&&!this.S.paused));
     if(this.anim){this.ctl.target.lerp(this.tg,.08);this.cam.position.lerp(this.cg,.08);if(this.cam.position.distanceTo(this.cg)<.004)this.anim=false}
-    this.ctl.update();this.r.render(this.scene,this.cam);
+    if(this.xrOn){this.r.render(this.scene,this.cam);return}
+    if(this.vr&&this.ori){const T=THREE,sp=new T.Spherical().setFromVector3(this.v.copy(this.cam.position).sub(this.ctl.target));sp.theta=-this.ori[0]*Math.PI/180;sp.phi=clamp((180-this.ori[1])*Math.PI/180,.25,2.9);this.cam.position.copy(this.ctl.target).add(this.v.setFromSpherical(sp))}
+    this.ctl.update();
+    if(this.vr){const r=this.r,hw=Math.floor(w/2);this.cam.updateMatrixWorld();this.stereo.update(this.cam);r.setScissorTest(true);r.setScissor(0,0,hw,h);r.setViewport(0,0,hw,h);r.render(this.scene,this.stereo.cameraL);r.setScissor(hw,0,w-hw,h);r.setViewport(hw,0,w-hw,h);r.render(this.scene,this.stereo.cameraR);r.setScissorTest(false);r.setViewport(0,0,w,h);this.gazeTick(dt)}
+    else this.r.render(this.scene,this.cam);
     Object.entries(this.labEls).forEach(([id,b])=>{const P=this.parts[id];if(!this.showLabels||P.removed||!P.g.visible||(this.only&&!this.only.includes(id))){b.style.display="none";return}
       this.v.copy(this.anchor(id)).project(this.cam);if(this.v.z>1||Math.abs(this.v.x)>1.05||Math.abs(this.v.y)>1.05){b.style.display="none";return}
       const o=P.meta.off||[0,0];b.style.display="flex";b.style.left=((this.v.x+1)/2*this.lw+o[0])+"px";b.style.top=((1-this.v.y)/2*this.lh+o[1])+"px"})}

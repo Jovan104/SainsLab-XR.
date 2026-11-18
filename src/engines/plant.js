@@ -1,7 +1,7 @@
 /* ===================== Biology: photosynthesis (pondweed experiment) ===================== */
 ENGINES.plant={
-  id:"plant",subject:"Biology",vehicle:"Photosynthesis",name:"Photosynthesis in pondweed",short:"photosynthesis experiment",specs:["Form 4 Biology","Nutrition in plants","Limiting factors","Light, CO₂, temperature"],
-  intro:"Green plants make their own food from carbon dioxide and water, using light energy trapped by chlorophyll. Oxygen is given off. Here you can watch it happen in a classic school experiment with Hydrilla pondweed, and zoom into a chloroplast to see where it happens.",
+  id:"plant",subject:"Biology",vehicle:"Photosynthesis",name:"Photosynthesis in pondweed",short:"photosynthesis experiment",specs:["Foundation Biology","Nutrition in plants","Limiting factors","Light, CO₂, temperature"],
+  intro:"Green plants make their own food from carbon dioxide and water, using light energy trapped by chlorophyll. Oxygen is given off. Here you can watch it happen in a classic lab experiment with Hydrilla pondweed, and zoom into a chloroplast to see where it happens.",
   how:["Light energy is absorbed by chlorophyll inside the chloroplasts.","Water is split; oxygen is released as a by-product and escapes as bubbles from the cut stem.","Carbon dioxide, supplied by the sodium hydrogen carbonate in the water, is fixed to make glucose.","Word equation: carbon dioxide + water → glucose + oxygen (with light energy and chlorophyll).","The rate is limited by whichever factor is in shortest supply: light intensity, carbon dioxide or temperature. That is called the limiting factor.","Counting bubbles per minute, or measuring the gas collected, measures the rate."],
   layers:{light:["Light","#F4D35E"],o2:["Oxygen","#BFF3FA"],co2:["Carbon dioxide","#9AA6B2"],sugar:["Glucose","#F4A261"]},
   S:{d:15,co2:1,temp:28,slow:1,paused:false,gas:0,t:0},
@@ -23,7 +23,7 @@ ENGINES.plant={
     const bk=B.part("BK",{n:"Beaker, water and sodium hydrogen carbonate",d:"The sodium hydrogen carbonate dissolves to give a steady supply of carbon dioxide for the pondweed.",at:[-.5,1.35,.4],dir:[0,0,.6]});
     B.cyl(bk,.56,.52,1.25,0xCFE8F2,0,.63,0,0,0,0,glass,40,true);B.cyl(bk,.53,.5,1.02,0x6FB7D6,0,.52,0,0,0,0,{transparent:true,opacity:.2,depthWrite:false},40);B.torus(bk,.56,.012,0xE8F4F8,0,1.255,0,Math.PI/2,0,0,{transparent:true,opacity:.6});
     for(let k=0;k<5;k++)B.box(bk,.12,.008,.01,0xFFFFFF,.5,.3+k*.18,.15,0,-.3,0,{transparent:true,opacity:.6});
-    const pw=B.part("PW",{n:"Pondweed (Hydrilla)",d:"A water plant often used in Malaysian school labs. Oxygen escapes as bubbles from its cut stem.",at:[-.35,.45,.3],dir:[0,0,.5]});
+    const pw=B.part("PW",{n:"Pondweed (Hydrilla)",d:"A water plant often used in Malaysian science labs. Oxygen escapes as bubbles from its cut stem.",at:[-.35,.45,.3],dir:[0,0,.5]});
     const tips=[];[[-.08,.05],[.07,-.04],[0,.08]].forEach(([x,z],i)=>{const pts=[[x*2,.08,z*2],[x*1.4,.35,z*1.4],[x,.62+i*.03,z]];B.tube(pw,pts,.012,0x2E7D32,{},false,16);tips.push(pts[2]);
       for(let k=0;k<7;k++){const y=.14+k*.07,f=1-(y-.08)/.6;for(let j=0;j<4;j++){const a=j*1.57+k*.5;B.box(pw,.07,.008,.02,0x43A047,x*2*f+x*(1-f)+Math.cos(a)*.04,y,z*2*f+z*(1-f)+Math.sin(a)*.04,0,-a,.3,{side:2})}}});
     const fn=B.part("FN",{n:"Funnel",d:"Turned upside down over the pondweed to guide the oxygen bubbles into the test tube.",at:[.45,.75,.2],dir:[0,0,.5]});
